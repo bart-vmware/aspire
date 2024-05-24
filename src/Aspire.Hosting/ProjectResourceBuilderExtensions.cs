@@ -222,16 +222,26 @@ public static class ProjectResourceBuilderExtensions
         {
             builder.WithAnnotation(new LaunchProfileAnnotation(launchProfileName));
         }
+        else
+        {
+            var appHostDefaultLaunchProfileName = builder.ApplicationBuilder.Configuration["AppHost:DefaultLaunchProfileName"]
+                ?? Environment.GetEnvironmentVariable("DOTNET_LAUNCH_PROFILE");
+            if (!string.IsNullOrEmpty(appHostDefaultLaunchProfileName))
+            {
+                builder.WithAnnotation(new DefaultLaunchProfileAnnotation(appHostDefaultLaunchProfileName));
+            }
+        }
 
         if (builder.ApplicationBuilder.ExecutionContext.IsRunMode)
         {
             // Process the launch profile and turn it into environment variables and endpoints.
-            var launchProfile = projectResource.GetEffectiveLaunchProfile(throwIfNotFound: true);
-            if (launchProfile is null)
+            var effectiveLaunchProfile = projectResource.GetEffectiveLaunchProfile(throwIfNotFound: true);
+            if (effectiveLaunchProfile is null)
             {
                 return builder;
             }
 
+            var launchProfile = effectiveLaunchProfile.LaunchProfile;
             var urlsFromApplicationUrl = launchProfile.ApplicationUrl?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? [];
             foreach (var url in urlsFromApplicationUrl)
             {
@@ -249,7 +259,7 @@ public static class ProjectResourceBuilderExtensions
             builder.WithEnvironment(context =>
             {
                 // Populate DOTNET_LAUNCH_PROFILE environment variable for consistency with "dotnet run" and "dotnet watch".
-                context.EnvironmentVariables.TryAdd("DOTNET_LAUNCH_PROFILE", launchProfileName!);
+                context.EnvironmentVariables.TryAdd("DOTNET_LAUNCH_PROFILE", effectiveLaunchProfile.Name);
 
                 foreach (var envVar in launchProfile.EnvironmentVariables)
                 {
@@ -378,7 +388,7 @@ public static class ProjectResourceBuilderExtensions
 
     private static bool IsWebProject(ProjectResource projectResource)
     {
-        var launchProfile = projectResource.GetEffectiveLaunchProfile(throwIfNotFound: true);
+        var launchProfile = projectResource.GetEffectiveLaunchProfile(throwIfNotFound: true)?.LaunchProfile;
         return launchProfile?.ApplicationUrl != null;
     }
 
