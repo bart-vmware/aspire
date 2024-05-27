@@ -234,6 +234,64 @@ public static class ContainerResourceBuilderExtensions
     {
         return builder.WithManifestPublishingCallback(context => context.WriteContainerAsync(builder.Resource));
     }
+
+    /// <summary>
+    /// Causes .NET Aspire to build the specified container image from a Dockerfile.
+    /// </summary>
+    /// <typeparam name="T">Type parameter specifying any type derived from <see cref="ContainerResource"/>/</typeparam>
+    /// <param name="builder">The <see cref="IResourceBuilder{T}"/>.</param>
+    /// <param name="contextPath">Path to be used as the context for the container image build.</param>
+    /// <param name="dockerfilePath">Override path for the Dockerfile if it is not in the <paramref name="contextPath"/>.</param>
+    /// <returns>A <see cref="IResourceBuilder{T}"/>.</returns>
+    /// <remarks>
+    /// <para>
+    /// When this method is called an annotation is added to the <see cref="ContainerResource"/> that specifies the context path and
+    /// Dockerfile path to be used when building the container image. These details are then used by the orchestrator to build the image
+    /// before using that image to start the container.
+    /// </para>
+    /// <para>
+    /// Both the <paramref name="contextPath"/> and <paramref name="dockerfilePath"/> are relative to the AppHost directory unless
+    /// they are fully qualified. If the <paramref name="dockerfilePath"/> is not provided, the path is assumed to be Dockerfile relative
+    /// to the <paramref name="contextPath"/>.
+    /// </para>
+    /// <para>
+    /// When generating the manifest for deployment tools, the <see cref="ContainerResourceBuilderExtensions.FromDockerfile{T}(IResourceBuilder{T}, string, string?)"/>
+    /// method results in an additional attribute being added to the `container.v0` resource type which contains the configuration
+    /// necessary to allow the deployment tool to build the container image prior to deployment.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// Creates a container called <c>mycontainer</c> with an image called <c>myimage</c>.
+    /// <code language="csharp">
+    /// var builder = DistributedApplication.CreateBuilder(args);
+    /// builder.AddContainer("mycontainer", "myimage")
+    ///        .FromDockerfile("path/to/context");
+    /// builder.Build().Run();
+    /// </code>
+    /// </example>
+    public static IResourceBuilder<T> FromDockerfile<T>(this IResourceBuilder<T> builder, string contextPath, string? dockerfilePath = null) where T : ContainerResource
+    {
+        ArgumentException.ThrowIfNullOrEmpty(contextPath);
+
+        var fullyQualifiedContextPath = Path.GetFullPath(contextPath, builder.ApplicationBuilder.AppHostDirectory);
+
+        dockerfilePath ??= "Dockerfile";
+
+        var fullyQualifiedDockerfilePath = Path.GetFullPath(dockerfilePath, fullyQualifiedContextPath);
+
+        if (!Directory.Exists(fullyQualifiedContextPath))
+        {
+            throw new DirectoryNotFoundException($"Context path not found at '{fullyQualifiedContextPath}'.");
+        }
+
+        if (!File.Exists(fullyQualifiedDockerfilePath))
+        {
+            throw new FileNotFoundException($"Dockerfile not found at '{fullyQualifiedDockerfilePath}'.");
+        }
+
+        var annotation = new DockerfileBuildAnnotation(fullyQualifiedContextPath, fullyQualifiedDockerfilePath);
+        return builder.WithAnnotation(annotation, ResourceAnnotationMutationBehavior.Replace);
+    }
 }
 
 internal static class IListExtensions

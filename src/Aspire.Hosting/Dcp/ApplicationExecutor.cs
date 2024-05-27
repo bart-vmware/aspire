@@ -1418,6 +1418,15 @@ internal sealed class ApplicationExecutor(ILogger<ApplicationExecutor> logger,
         var dcpContainerResource = (Container)cr.DcpResource;
         var modelContainerResource = cr.ModelResource;
 
+        if (modelContainerResource.Annotations.OfType<DockerfileBuildAnnotation>().SingleOrDefault() is { } dockerfileBuildAnnotation)
+        {
+            dcpContainerResource.Spec.Build = new()
+            {
+                Context = dockerfileBuildAnnotation.ContextPath,
+                Dockerfile = dockerfileBuildAnnotation.DockerfilePath
+            };
+        }
+
         var config = new Dictionary<string, object>();
 
         dcpContainerResource.Spec.Env = [];
