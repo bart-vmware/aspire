@@ -242,6 +242,7 @@ public static class ContainerResourceBuilderExtensions
     /// <param name="builder">The <see cref="IResourceBuilder{T}"/>.</param>
     /// <param name="contextPath">Path to be used as the context for the container image build.</param>
     /// <param name="dockerfilePath">Override path for the Dockerfile if it is not in the <paramref name="contextPath"/>.</param>
+    /// <param name="stage">The stage representing the image to be published in a multi-stage Dockerfile.</param>
     /// <returns>A <see cref="IResourceBuilder{T}"/>.</returns>
     /// <remarks>
     /// <para>
@@ -255,7 +256,7 @@ public static class ContainerResourceBuilderExtensions
     /// to the <paramref name="contextPath"/>.
     /// </para>
     /// <para>
-    /// When generating the manifest for deployment tools, the <see cref="ContainerResourceBuilderExtensions.FromDockerfile{T}(IResourceBuilder{T}, string, string?)"/>
+    /// When generating the manifest for deployment tools, the <see cref="ContainerResourceBuilderExtensions.FromDockerfile{T}(IResourceBuilder{T}, string, string?, string?)"/>
     /// method results in an additional attribute being added to the `container.v0` resource type which contains the configuration
     /// necessary to allow the deployment tool to build the container image prior to deployment.
     /// </para>
@@ -269,7 +270,7 @@ public static class ContainerResourceBuilderExtensions
     /// builder.Build().Run();
     /// </code>
     /// </example>
-    public static IResourceBuilder<T> FromDockerfile<T>(this IResourceBuilder<T> builder, string contextPath, string? dockerfilePath = null) where T : ContainerResource
+    public static IResourceBuilder<T> FromDockerfile<T>(this IResourceBuilder<T> builder, string contextPath, string? dockerfilePath = null, string? stage = null) where T : ContainerResource
     {
         ArgumentException.ThrowIfNullOrEmpty(contextPath);
 
@@ -289,8 +290,68 @@ public static class ContainerResourceBuilderExtensions
             throw new FileNotFoundException($"Dockerfile not found at '{fullyQualifiedDockerfilePath}'.");
         }
 
-        var annotation = new DockerfileBuildAnnotation(fullyQualifiedContextPath, fullyQualifiedDockerfilePath);
+        var annotation = new DockerfileBuildAnnotation(fullyQualifiedContextPath, fullyQualifiedDockerfilePath, stage);
         return builder.WithAnnotation(annotation, ResourceAnnotationMutationBehavior.Replace);
+    }
+
+    /// <summary>
+    /// Adds a build argument when the container is build from a Dockerfile.
+    /// </summary>
+    /// <typeparam name="T">The type of container resoruce.</typeparam>
+    /// <param name="builder">The resource builder for the container resource.</param>
+    /// <param name="name">The name of the build argument.</param>
+    /// <param name="value">The value of the build argument.</param>
+    /// <returns>The resource builder for the container resource.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when <see cref="ContainerResourceBuilderExtensions.WithBuildArg{T}(IResourceBuilder{T}, string, object)"/> is
+    /// called before <see cref="ContainerResourceBuilderExtensions.FromDockerfile{T}(IResourceBuilder{T}, string, string?, string?)"/>.
+    /// </exception>
+    /// <remarks>
+    /// <para>
+    /// The <see cref="ContainerResourceBuilderExtensions.WithBuildArg{T}(IResourceBuilder{T}, string, object)"/> extension method
+    /// adds an additional build argument the container resource to be used when the image is built. This method must be called after
+    /// <see cref="ContainerResourceBuilderExtensions.FromDockerfile{T}(IResourceBuilder{T}, string, string?, string?)"/>.
+    /// </para>
+    /// </remarks>
+    public static IResourceBuilder<T> WithBuildArg<T>(this IResourceBuilder<T> builder, string name, object value) where T : ContainerResource
+    {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentNullException.ThrowIfNull(value);
+
+        var annotation = builder.Resource.Annotations.OfType<DockerfileBuildAnnotation>().SingleOrDefault();
+
+        if (annotation is null)
+        {
+            throw new InvalidOperationException("The resource does not have a Dockerfile build annotation. Call FromDockerfile before calling WithBuildArg.");
+        }
+
+        annotation.BuildArguments[name] = value;
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds a build argument when the container is build from a Dockerfile.
+    /// </summary>
+    /// <typeparam name="T">The type of container resoruce.</typeparam>
+    /// <param name="builder">The resource builder for the container resource.</param>
+    /// <param name="name">The name of the build argument.</param>
+    /// <param name="value">The resource builder for a parameter resource.</param>
+    /// <returns>The resource builder for the container resource.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when <see cref="ContainerResourceBuilderExtensions.WithBuildArg{T}(IResourceBuilder{T}, string, IResourceBuilder{ParameterResource})"/> is
+    /// called before <see cref="ContainerResourceBuilderExtensions.FromDockerfile{T}(IResourceBuilder{T}, string, string?, string?)"/>.
+    /// </exception>
+    /// <remarks>
+    /// <para>
+    /// The <see cref="ContainerResourceBuilderExtensions.WithBuildArg{T}(IResourceBuilder{T}, string, IResourceBuilder{ParameterResource})"/> extension method
+    /// adds an additional build argument the container resource to be used when the image is built. This method must be called after
+    /// <see cref="ContainerResourceBuilderExtensions.FromDockerfile{T}(IResourceBuilder{T}, string, string?, string?)"/>.
+    /// </para>
+    /// </remarks>
+    public static IResourceBuilder<T> WithBuildArg<T>(this IResourceBuilder<T> builder, string name, IResourceBuilder<ParameterResource> value) where T : ContainerResource
+    {
+        return builder.WithBuildArg(name, value.Resource);
     }
 }
 

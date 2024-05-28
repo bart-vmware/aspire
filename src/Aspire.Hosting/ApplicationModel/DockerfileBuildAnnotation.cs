@@ -3,8 +3,10 @@
 
 namespace Aspire.Hosting.ApplicationModel;
 
-internal class DockerfileBuildAnnotation(string contextPath, string dockerfilePath) : IResourceAnnotation
+internal class DockerfileBuildAnnotation(string contextPath, string dockerfilePath, string? stage) : IResourceAnnotation
 {
     public string ContextPath => contextPath;
     public string DockerfilePath = dockerfilePath;
+    public string? Stage => stage;
+    public Dictionary<string, object> BuildArguments { get; } = new();
 }

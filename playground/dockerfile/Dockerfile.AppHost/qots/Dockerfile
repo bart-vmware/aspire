@@ -1,17 +1,13 @@
 # Stage 1: Build the Go program
-FROM golang:1.16 AS builder
-
+ARG GO_VERSION=1.16
+FROM golang:${GO_VERSION} AS builder
 WORKDIR /app
-
 COPY . .
-
 RUN go build qots.go
 
 # Stage 2: Run the Go program
-FROM golang:1.16
-
+ARG GO_VERSION
+FROM golang:${GO_VERSION}
 WORKDIR /app
-
 COPY --from=builder /app/qots .
-
 CMD ["./qots"]

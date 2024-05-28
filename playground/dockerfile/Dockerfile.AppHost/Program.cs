@@ -2,9 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 var builder = DistributedApplication.CreateBuilder(args);
+builder.Configuration["Parameters:goversion"] = "1.22"; // Just for validating parameter handling in Dockerfile builds.
+
+var goVersion = builder.AddParameter("goversion");
 
 builder.AddContainer("mycontainer", "myimage")
-       .FromDockerfile("qots");
+       .FromDockerfile("qots")
+       .WithBuildArg("GO_VERSION", goVersion);
 
 // This project is only added in playground projects to support development/debugging
 // of the dashboard. It is not required in end developer code. Comment out this code
