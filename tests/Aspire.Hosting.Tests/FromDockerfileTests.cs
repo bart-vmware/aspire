@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Aspire.Components.Common.Tests;
 using Aspire.Hosting.Dcp;
 using Aspire.Hosting.Dcp.Model;
 using Aspire.Hosting.Testing;
@@ -12,7 +13,7 @@ namespace Aspire.Hosting.Tests;
 
 public class FromDockerfileTests
 {
-    [Fact]
+    [RequiresDockerFactAttribute]
     public async Task FromDockerfileLaunchesContainerSuccessfully()
     {
         using var builder = TestDistributedApplicationBuilder.Create();
@@ -88,7 +89,7 @@ public class FromDockerfileTests
         Assert.Equal(expectedManifest, manifest.ToString());
     }
 
-    [Fact]
+    [RequiresDockerFactAttribute]
     public async Task FromDockerfileWithParameterLaunchesContainerSuccessfully()
     {
         using var builder = TestDistributedApplicationBuilder.Create();
