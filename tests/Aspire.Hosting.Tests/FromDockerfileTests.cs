@@ -13,7 +13,7 @@ namespace Aspire.Hosting.Tests;
 
 public class FromDockerfileTests
 {
-    [RequiresDockerFactAttribute]
+    [RequiresDockerFact]
     public async Task FromDockerfileLaunchesContainerSuccessfully()
     {
         using var builder = TestDistributedApplicationBuilder.Create();
@@ -89,7 +89,7 @@ public class FromDockerfileTests
         Assert.Equal(expectedManifest, manifest.ToString());
     }
 
-    [RequiresDockerFactAttribute]
+    [RequiresDockerFact]
     public async Task FromDockerfileWithParameterLaunchesContainerSuccessfully()
     {
         using var builder = TestDistributedApplicationBuilder.Create();
