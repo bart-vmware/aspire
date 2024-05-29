@@ -41,6 +41,42 @@ public class FromDockerfileTests
     }
 
     [Fact]
+    public async Task FromDockerfileResultsInBuildAttributeBeingAddedToManifest()
+    {
+        var (tempContextPath, tempDockerfilePath) = await CreateTemporaryDockerfileAsync();
+        var manifestOutputPath = Path.Combine(tempContextPath, "aspire-manifest.json");
+        var builder = DistributedApplication.CreateBuilder(new DistributedApplicationOptions
+        {
+            Args = ["--publisher", "manifest", "--output-path", manifestOutputPath],
+        });
+
+        var container = builder.AddContainer("testcontainer", "testimage")
+                               .WithHttpEndpoint(targetPort: 80)
+                               .FromDockerfile(tempContextPath, tempDockerfilePath);
+
+        var manifest = await ManifestUtils.GetManifest(container.Resource, manifestDirectory: tempContextPath);
+        var expectedManifest = $$$$"""
+            {
+              "type": "container.v0",
+              "image": "testimage:latest",
+              "build": {
+                "context": ".",
+                "dockerfile": "Dockerfile"
+              },
+              "bindings": {
+                "http": {
+                  "scheme": "http",
+                  "protocol": "tcp",
+                  "transport": "http",
+                  "targetPort": 80
+                }
+              }
+            }
+            """;
+        Assert.Equal(expectedManifest, manifest.ToString());
+    }
+
+    [Fact]
     public async Task FromDockerfileWithParameterLaunchesContainerSuccessfully()
     {
         using var builder = TestDistributedApplicationBuilder.Create();
