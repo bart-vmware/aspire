@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"math/rand"
-    "runtime"
+	"runtime"
 	"time"
 )
 
 func main() {
-    fmt.Println("Go runtime version:", runtime.Version())
+	fmt.Println("Go runtime version:", runtime.Version())
 
 	quotes := []string{
 		"With great power comes great responsibility. - Spider-Man",
