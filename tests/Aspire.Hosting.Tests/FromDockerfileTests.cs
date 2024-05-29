@@ -50,9 +50,15 @@ public class FromDockerfileTests
             Args = ["--publisher", "manifest", "--output-path", manifestOutputPath],
         });
 
+        var parameter = builder.AddParameter("message");
+        builder.Configuration["Parameters:message"] = "hello";
+
         var container = builder.AddContainer("testcontainer", "testimage")
                                .WithHttpEndpoint(targetPort: 80)
-                               .FromDockerfile(tempContextPath, tempDockerfilePath);
+                               .FromDockerfile(tempContextPath, tempDockerfilePath, "runner")
+                               .WithBuildArg("MESSAGE", parameter)
+                               .WithBuildArg("stringParam", "a string")
+                               .WithBuildArg("intParam", 42);
 
         var manifest = await ManifestUtils.GetManifest(container.Resource, manifestDirectory: tempContextPath);
         var expectedManifest = $$$$"""
@@ -61,7 +67,13 @@ public class FromDockerfileTests
               "image": "testimage:latest",
               "build": {
                 "context": ".",
-                "dockerfile": "Dockerfile"
+                "dockerfile": "Dockerfile",
+                "stage": "runner",
+                "args": {
+                  "MESSAGE": "{message.value}",
+                  "stringParam": "a string",
+                  "intParam": "42"
+                }
               },
               "bindings": {
                 "http": {
@@ -88,7 +100,11 @@ public class FromDockerfileTests
         builder.AddContainer("testcontainer", "testimage")
                .WithHttpEndpoint(targetPort: 80)
                .FromDockerfile(tempContextPath, tempDockerfilePath)
-               .WithBuildArg("MESSAGE", parameter);
+               .WithBuildArg("MESSAGE", parameter)
+               .WithBuildArg("stringParam", "a string")
+               .WithBuildArg("intParam", 42)
+               .WithBuildArg("boolParamTrue", true)
+               .WithBuildArg("boolParamFalse", false);
 
         using var app = builder.Build();
         await app.StartAsync();
@@ -104,6 +120,35 @@ public class FromDockerfileTests
         var container = Assert.Single<Container>(containers);
         Assert.Equal(tempContextPath, container!.Spec!.Build!.Context);
         Assert.Equal(tempDockerfilePath, container!.Spec!.Build!.Dockerfile);
+        Assert.Null(container!.Spec!.Build!.Stage);
+        Assert.Collection(
+            container!.Spec!.Build!.Args!,
+            arg =>
+            {
+                Assert.Equal("MESSAGE", arg.Name);
+                Assert.Equal("hello", arg.Value);
+            },
+            arg =>
+            {
+                Assert.Equal("stringParam", arg.Name);
+                Assert.Equal("a string", arg.Value);
+            },
+            arg =>
+            {
+                Assert.Equal("intParam", arg.Name);
+                Assert.Equal("42", arg.Value);
+            },
+            arg =>
+            {
+                Assert.Equal("boolParamTrue", arg.Name);
+                Assert.Equal("true", arg.Value);
+            },
+            arg =>
+            {
+                Assert.Equal("boolParamFalse", arg.Name);
+                Assert.Equal("false", arg.Value);
+            }
+            );
 
         await app.StopAsync();
     }
@@ -234,9 +279,13 @@ public class FromDockerfileTests
     private const string DefaultMessage = "aspire!";
 
     private const string HelloWorldDockerfile = $$"""
-        FROM mcr.microsoft.com/k8se/quickstart:latest
-        ARG MESSAGE={{DefaultMessage}}
+        FROM mcr.microsoft.com/k8se/quickstart:latest AS builder
+        ARG MESSAGE=aspire!
         RUN echo ${MESSAGE} > /app/static/aspire.html
+
+        FROM mcr.microsoft.com/k8se/quickstart:latest AS runner
+        ARG MESSAGE
+        COPY --from=builder /app/static/aspire.html /app/static
         """;
 }
 

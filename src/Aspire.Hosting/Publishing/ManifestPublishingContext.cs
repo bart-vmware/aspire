@@ -260,6 +260,11 @@ public sealed class ManifestPublishingContext(DistributedApplicationExecutionCon
             Writer.WriteString("context", GetManifestRelativePath(annotation.ContextPath));
             Writer.WriteString("dockerfile", GetManifestRelativePath(annotation.DockerfilePath));
 
+            if (annotation.Stage is { } stage)
+            {
+                Writer.WriteString("stage", stage);
+            }
+
             if (annotation.BuildArguments.Count > 0)
             {
                 Writer.WriteStartObject("args");
