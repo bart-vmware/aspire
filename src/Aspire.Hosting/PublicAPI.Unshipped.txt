@@ -81,6 +81,8 @@ Aspire.Hosting.ApplicationModel.HealthCheckAnnotation
 Aspire.Hosting.ApplicationModel.HealthCheckAnnotation.HealthCheckAnnotation(string! key) -> void
 Aspire.Hosting.ApplicationModel.HealthCheckAnnotation.Key.get -> string!
 Aspire.Hosting.ApplicationModel.IResourceWithWaitSupport
+Aspire.Hosting.ApplicationModel.NetworkResource
+Aspire.Hosting.ApplicationModel.NetworkResource.NetworkResource(string! name) -> void
 Aspire.Hosting.ApplicationModel.ResourceCommandAnnotation.ConfirmationMessage.get -> string?
 Aspire.Hosting.ApplicationModel.ResourceCommandAnnotation.DisplayDescription.get -> string?
 Aspire.Hosting.ApplicationModel.ResourceCommandAnnotation.Parameter.get -> object?
@@ -133,6 +135,12 @@ Aspire.Hosting.ApplicationModel.ResourceReadyEvent
 Aspire.Hosting.ApplicationModel.ResourceReadyEvent.Resource.get -> Aspire.Hosting.ApplicationModel.IResource!
 Aspire.Hosting.ApplicationModel.ResourceReadyEvent.ResourceReadyEvent(Aspire.Hosting.ApplicationModel.IResource! resource, System.IServiceProvider! services) -> void
 Aspire.Hosting.ApplicationModel.ResourceReadyEvent.Services.get -> System.IServiceProvider!
+Aspire.Hosting.ApplicationModel.SubnetworkAnnotation
+Aspire.Hosting.ApplicationModel.SubnetworkAnnotation.Subnetwork.get -> Aspire.Hosting.ApplicationModel.SubnetworkResource!
+Aspire.Hosting.ApplicationModel.SubnetworkAnnotation.SubnetworkAnnotation(Aspire.Hosting.ApplicationModel.SubnetworkResource! subnet) -> void
+Aspire.Hosting.ApplicationModel.SubnetworkResource
+Aspire.Hosting.ApplicationModel.SubnetworkResource.Parent.get -> Aspire.Hosting.ApplicationModel.NetworkResource!
+Aspire.Hosting.ApplicationModel.SubnetworkResource.SubnetworkResource(string! name, Aspire.Hosting.ApplicationModel.NetworkResource! parent) -> void
 Aspire.Hosting.ApplicationModel.UpdateCommandStateContext
 Aspire.Hosting.ApplicationModel.UpdateCommandStateContext.ResourceSnapshot.get -> Aspire.Hosting.ApplicationModel.CustomResourceSnapshot!
 Aspire.Hosting.ApplicationModel.UpdateCommandStateContext.ResourceSnapshot.init -> void
@@ -208,6 +216,7 @@ Aspire.Hosting.LaunchSettings
 Aspire.Hosting.LaunchSettings.LaunchSettings() -> void
 Aspire.Hosting.LaunchSettings.Profiles.get -> System.Collections.Generic.Dictionary<string!, Aspire.Hosting.LaunchProfile!>!
 Aspire.Hosting.LaunchSettings.Profiles.set -> void
+Aspire.Hosting.NetworkResourceBuilderExtensions
 static Aspire.Hosting.ApplicationModel.CommandResults.Success() -> Aspire.Hosting.ApplicationModel.ExecuteCommandResult!
 static Aspire.Hosting.ApplicationModel.ResourceExtensions.GetEnvironmentVariableValuesAsync(this Aspire.Hosting.ApplicationModel.IResourceWithEnvironment! resource, Aspire.Hosting.DistributedApplicationOperation applicationOperation = Aspire.Hosting.DistributedApplicationOperation.Run) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.Dictionary<string!, string!>!>
 Aspire.Hosting.ApplicationModel.ResourceNotificationService.WaitForResourceAsync(string! resourceName, string? targetState = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
@@ -215,6 +224,9 @@ Aspire.Hosting.ApplicationModel.ResourceNotificationService.WaitForResourceAsync
 static Aspire.Hosting.ApplicationModel.ResourceExtensions.TryGetAnnotationsIncludingAncestorsOfType<T>(this Aspire.Hosting.ApplicationModel.IResource! resource, out System.Collections.Generic.IEnumerable<T>? result) -> bool
 static Aspire.Hosting.ContainerResourceBuilderExtensions.WithContainerName<T>(this Aspire.Hosting.ApplicationModel.IResourceBuilder<T!>! builder, string! name) -> Aspire.Hosting.ApplicationModel.IResourceBuilder<T!>!
 static Aspire.Hosting.ContainerResourceBuilderExtensions.WithLifetime<T>(this Aspire.Hosting.ApplicationModel.IResourceBuilder<T!>! builder, Aspire.Hosting.ApplicationModel.ContainerLifetime lifetime) -> Aspire.Hosting.ApplicationModel.IResourceBuilder<T!>!
+static Aspire.Hosting.NetworkResourceBuilderExtensions.AddNetwork(this Aspire.Hosting.IDistributedApplicationBuilder! builder, string! name) -> Aspire.Hosting.ApplicationModel.IResourceBuilder<Aspire.Hosting.ApplicationModel.NetworkResource!>!
+static Aspire.Hosting.NetworkResourceBuilderExtensions.AddSubnet(this Aspire.Hosting.ApplicationModel.IResourceBuilder<Aspire.Hosting.ApplicationModel.NetworkResource!>! builder, string! name) -> Aspire.Hosting.ApplicationModel.IResourceBuilder<Aspire.Hosting.ApplicationModel.SubnetworkResource!>!
+static Aspire.Hosting.NetworkResourceBuilderExtensions.WithNetwork<T>(this Aspire.Hosting.ApplicationModel.IResourceBuilder<T>! builder, Aspire.Hosting.ApplicationModel.IResourceBuilder<Aspire.Hosting.ApplicationModel.SubnetworkResource!>! subnet) -> Aspire.Hosting.ApplicationModel.IResourceBuilder<T>!
 static Aspire.Hosting.ParameterResourceBuilderExtensions.AddParameter(this Aspire.Hosting.IDistributedApplicationBuilder! builder, string! name, Aspire.Hosting.ApplicationModel.ParameterDefault! value, bool secret = false, bool persist = false) -> Aspire.Hosting.ApplicationModel.IResourceBuilder<Aspire.Hosting.ApplicationModel.ParameterResource!>!
 static Aspire.Hosting.ParameterResourceBuilderExtensions.AddParameter(this Aspire.Hosting.IDistributedApplicationBuilder! builder, string! name, string! value, bool publishValueAsDefault = false, bool secret = false) -> Aspire.Hosting.ApplicationModel.IResourceBuilder<Aspire.Hosting.ApplicationModel.ParameterResource!>!
 static Aspire.Hosting.ParameterResourceBuilderExtensions.AddParameter(this Aspire.Hosting.IDistributedApplicationBuilder! builder, string! name, System.Func<string!>! valueGetter, bool publishValueAsDefault = false, bool secret = false) -> Aspire.Hosting.ApplicationModel.IResourceBuilder<Aspire.Hosting.ApplicationModel.ParameterResource!>!
